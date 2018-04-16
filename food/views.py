@@ -1,6 +1,6 @@
 from django.http import HttpResponse
-from food.models import UserCalorie, Food
-from food.serializers import UserCreateSerializer, UserCalorieSerializer, FoodSerializer, UserSerializer
+from food.models import UserCalorie, Food, UserProfile
+from food.serializers import UserCreateSerializer, UserCalorieSerializer, FoodSerializer, UserSerializer, ProfileSerializer
 from rest_framework import generics
 from django.contrib.auth.models import User
 # from uusapp.serializers import UserSerializer, UserCreateSerializer
@@ -28,20 +28,26 @@ import io, cv2
 def index(request):
     return HttpResponse("Welcome to food caloire estimation")
 
-class CreateUserView(generics.CreateAPIView):
-    model = User
-    permission_classes = (permissions.AllowAny,)
-    serializer_class = UserCreateSerializer
+class UserPro(generics.CreateAPIView):
+    # permission_classes = (permissions)
+    # queryset = UserProfile.objects.all()
+    serializer_class = ProfileSerializer
 
-class UserList(generics.ListAPIView):
-	# permission_classes = (permissions)
-	queryset = User.objects.all()
-	serializer_class = UserSerializer
+    def create(self, request, *args, **kwargs):
+        # serializer.save(owner=self.request.user)
+        serializer = ProfileSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(owner=self.request.user)
+        h=float(self.request.data['height'])
+        w=float(self.request.data['weight'])
+        a=float(self.request.data['age'])
+        g = self.request.data['gender']
+        if(g=='f'):
+            res = 10.0*w+6.25*h-5.0*a-161.0
+        else:
+            res = 10.0*w+6.25*h-5.0*a+5
+        return Response(res)
 
-
-class UserDetail(generics.RetrieveAPIView):
-	queryset = User.objects.all()
-	serializer_class = UserSerializer
 
 class CaloireEstimate(generics.CreateAPIView):
     serializer_class = UserCalorieSerializer
@@ -50,6 +56,7 @@ class CaloireEstimate(generics.CreateAPIView):
         permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
         img = cv2.imdecode(np.fromstring(request.data['image'].read(), np.uint8), cv2.IMREAD_UNCHANGED)
         t = Deep(img)
+        # return Response(t)
         serializer1 = FoodSerializer(Food.objects.get(item=t))
         owner = self.request.user
         item = t
@@ -59,7 +66,7 @@ class CaloireEstimate(generics.CreateAPIView):
         serializer = UserCalorieSerializer(data=dat)
         if serializer.is_valid():
             serializer.save()
-        return Response("Succesfully Uploaded")
+        return Response(t)
 
 class FoodCalorie(generics.CreateAPIView):
     queryset = Food.objects.all()

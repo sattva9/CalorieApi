@@ -11,7 +11,8 @@ from django.conf.urls.static import static
 urlpatterns = [
     url(r'^$', views.index, name='index'),
     url(r'^estimate/$', views.CaloireEstimate.as_view()),
-    url(r'^food/$', views.FoodCalorie.as_view()), # Responsible for adding images . BasicAUTH 
+    url(r'^profile/$', views.UserPro.as_view()),
+    url(r'^food/$', views.FoodCalorie.as_view()), 
     url(r'^users/$', views.UserList.as_view()),
     url(r'^register/$', views.CreateUserView.as_view()),
     # url(r'^addimage/$', views.AddImage.as_view()),

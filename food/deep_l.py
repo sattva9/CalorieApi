@@ -1,66 +1,56 @@
-import cv2
-import os
-import numpy as np
+from keras.models import Sequential
+from keras.layers import Conv2D, MaxPooling2D
+from keras.layers import Activation, Dropout, Flatten, Dense
 
-import tflearn
-from tflearn.layers.conv import conv_2d, max_pool_2d
-from tflearn.layers.core import input_data, dropout, fully_connected
-from tflearn.layers.estimator import regression
+from scipy import misc
+import json
+
+import tensorflow as tf
+
+def small_convnet():
+	model = Sequential()
+	model.add(Conv2D(32, (3, 3), input_shape=(150, 150, 3)))
+	model.add(Activation('relu'))
+	model.add(MaxPooling2D(pool_size=(2, 2)))
+
+	model.add(Conv2D(32, (3, 3)))
+	model.add(Activation('relu'))
+	model.add(MaxPooling2D(pool_size=(2, 2)))
+
+	model.add(Conv2D(64, (3, 3)))
+	model.add(Activation('relu'))
+	model.add(MaxPooling2D(pool_size=(2, 2)))
+
+	model.add(Flatten()) 
+	model.add(Dense(64))
+	model.add(Activation('relu'))
+	model.add(Dropout(0.5))
+	model.add(Dense(25))
+	model.add(Activation('softmax'))
+
+	model.compile(loss='categorical_crossentropy',
+				optimizer='adam',
+				metrics=['acc'])
+
+	return model
+
+def Deep(img):
+
+	graph = tf.Graph()
+	with graph.as_default():
+		session = tf.Session()
+		with session.as_default():
+			convnet = small_convnet()
+			convnet.load_weights('weights.h5')
+			
+			x = misc.imresize(img, (150, 150, 3))
+			x = x.reshape((1,) + x.shape)
+			
+			p = convnet.predict_classes(x, verbose=1)
+			with open('data.json', 'r') as fp:
+				data = json.load(fp)
+			return(data[str(p[0])])
 
 
-def Deep(path):
 
-	IMG_SIZE = 50
-	learn_rate = 1e-3
-
-	MODEL_NAME = 'dogsvscats-{}-{}.model'.format(learn_rate, 'tconv-basic')
-
-	convnet = input_data(shape=[None, IMG_SIZE, IMG_SIZE, 1], name='input')
-
-	convnet = conv_2d(convnet, 32, 5, activation='relu')
-	convnet = max_pool_2d(convnet, 5)
-
-	convnet = conv_2d(convnet, 64, 5, activation='relu')
-	convnet = max_pool_2d(convnet, 5)
-
-	convnet = conv_2d(convnet, 128, 5, activation='relu')
-	convnet = max_pool_2d(convnet, 5)
-
-	convnet = conv_2d(convnet, 64, 5, activation='relu')
-	convnet = max_pool_2d(convnet, 5)
-
-	convnet = conv_2d(convnet, 32, 5, activation='relu')
-	convnet = max_pool_2d(convnet, 5)
-
-	convnet = fully_connected(convnet, 1024, activation='relu')
-	convnet = dropout(convnet, 0.8)
-
-	convnet = fully_connected(convnet, 2, activation='softmax')
-	convnet = regression(convnet, optimizer='adam', learning_rate=learn_rate, loss='categorical_crossentropy', name='targets')
-
-	model = tflearn.DNN(convnet, tensorboard_dir='log')
-	
-	if os.path.exists('{}.meta'.format(MODEL_NAME)):
-		model.load(MODEL_NAME)
-		# # print('model loded!')
-		# return "super"
-
-	# if path.exists(path):
-	# path = 'media/Images/8.jpg'
-
-	# img = cv2.imread(path[1:], cv2.IMREAD_GRAYSCALE)
-	# img = cv2.imread(path[1:])
-	img = cv2.cvtColor(path, cv2.COLOR_BGR2GRAY)
-	# print(np.array(img))
-	img = cv2.resize(img, (IMG_SIZE, IMG_SIZE))
-	img_data = np.array(img)
-	data = img_data.reshape(IMG_SIZE, IMG_SIZE, 1)
-	model_out = model.predict([data])[0]
-	if np.argmax(model_out) == 1: 
-		STR_LABEL='dog'
-		return "dog"
-	else:
-		STR_LABEL='cat'
-		return "cat"
-		# print(STR_LABEL)
 	

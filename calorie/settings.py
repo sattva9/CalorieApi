@@ -25,9 +25,10 @@ SECRET_KEY = 'v-jkq+wu-gj4ot74*kt2*-vn)(!n91^vmpv*yg_61#fx*dl9l+'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['192.168.43.7','127.0.0.1']
 
-
+# AUTH_USER_MODEL = 'food.User'
+# AUTH_PROFILE_MODULE = 'food.UserProfile'
 # Application definition
 
 INSTALLED_APPS = [
@@ -71,6 +72,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'calorie.wsgi.application'
+
 
 
 # Database
